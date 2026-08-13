@@ -1,6 +1,20 @@
+import os.path
 from tkinter import *
+from tkinter import messagebox
+from pandas import DataFrame
+from random import choice,randint,shuffle
+import pyperclip
 
 FONT = ("Arial", 10, "bold")
+
+data_blueprint = {
+    "Website": [],
+    "Email": [],
+    "Password": []
+}
+df = DataFrame(data_blueprint)
+if not os.path.exists('data.txt'):
+    df.to_csv("data.txt", index=False, sep="|")
 
 window = Tk()
 window.title("Password Manager")
@@ -17,6 +31,7 @@ website_label.grid(row=1, column=0)
 
 website_entry = Entry(width=35, fg="gray")
 website_entry.grid(row=1, column=1, columnspan=2, sticky="EW")
+website_entry.focus()
 website_placeholder = "Enter your website here"
 website_entry.insert(0, website_placeholder)
 
@@ -83,13 +98,48 @@ password_entry.bind("<FocusOut>", on_password_out)
 
 #____________________________END______________________________________________
 
+def save_data():
+    website = website_entry.get()
+    email = usermail_entry.get()
+    password = password_entry.get()
+    if website == "" or email == "" or password == "":
+        messagebox.showerror("Error", "Please fill all fields")
+    else:
+        is_ok = messagebox.askokcancel(title=website, message=f"Email: {email}\nPassword: {password}\n\nProceed??? ")
+        if is_ok:
+            df.loc[len(df)] = [website, email, password]
+            df.to_csv("data.txt", index=False, sep="|", mode="a", header=False)
+            website_entry.delete(0, END)
+            usermail_entry.delete(0, END)
+            password_entry.delete(0, END)
+
+#------------------------------- Password Generator ----------------------------
+def generate_password():
+    password_entry.delete(0, END)
+    letters = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z']
+    numbers = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
+    symbols = ['!', '#', '$', '%', '&', '(', ')', '*', '+']
+
+    password_list = [choice(letters) for i in range(randint(8, 10))]
+    char_list = [choice(symbols) for i in range(randint(2, 4))]
+    number_list = [choice(numbers) for i in range(randint(2, 4))]
+
+    list_password = password_list + char_list + number_list
+
+    shuffle(list_password)
+
+    password = "".join(list_password)
+    pyperclip.copy(password)
+    password_entry.insert(0, password)
+#-------------------------------End---------------------------------------------
 #___________________________BUTTONS___________________________________________
 
-generate_btn = Button(text="Generate Password")
+generate_btn = Button(text="Generate Password", command=generate_password)
 generate_btn.grid(row=3, column=2)
 
-add_btn = Button(text="Add", width=36)
+add_btn = Button(text="Add", width=36, command=save_data)
 add_btn.grid(row=4, column=1, columnspan=2, sticky="EW")
 #______________________________END______________________________________________
+
 
 window.mainloop()

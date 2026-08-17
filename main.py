@@ -19,8 +19,8 @@ canvas.grid(row=0, column=1)
 website_label = Label(text="Website:", font=FONT)
 website_label.grid(row=1, column=0)
 
-website_entry = Entry(width=35, fg="gray")
-website_entry.grid(row=1, column=1, columnspan=2, sticky="EW")
+website_entry = Entry(width=32, fg="gray")
+website_entry.grid(row=1, column=1, columnspan=2, sticky="W")
 website_entry.focus()
 website_placeholder = "Enter your website here"
 website_entry.insert(0, website_placeholder)
@@ -67,8 +67,8 @@ usermail_entry.bind("<FocusOut>", on_mail_out)
 password_label = Label(text="Password:", font=FONT)
 password_label.grid(row=3, column=0)
 
-password_entry = Entry(width=21, fg="gray")
-password_entry.grid(row=3, column=1, sticky="EW")
+password_entry = Entry(width=32, fg="gray")
+password_entry.grid(row=3, column=1, sticky="W")
 password_placeholder = "Enter your password here"
 
 password_entry.insert(0, password_placeholder)
@@ -106,14 +106,20 @@ def save_data():
     else:
         is_ok = messagebox.askokcancel(title=website, message=f"Email: {email}\nPassword: {password}\n\nProceed??? ")
         if is_ok:
-            with open("data.json", "r") as file:
-                data = json.load(file)
+            try:
+                with open("data.json", "r") as file:
+                    data = json.load(file)
+            except FileNotFoundError:
+                with open("data.json", "w") as file:
+                    json.dump(new_data, file, indent=4)
+            else:
                 data.update(new_data)
-            with open("data.json", "w") as file:
-                json.dump(data, file, indent=4)
-            website_entry.delete(0, END)
-            usermail_entry.delete(0, END)
-            password_entry.delete(0, END)
+                with open("data.json", "w") as file:
+                    json.dump(data, file, indent=4)
+            finally:
+                website_entry.delete(0, END)
+                usermail_entry.delete(0, END)
+                password_entry.delete(0, END)
 
 #------------------------------- Password Generator ----------------------------
 def generate_password():
@@ -134,10 +140,31 @@ def generate_password():
     pyperclip.copy(password)
     password_entry.insert(0, password)
 #-------------------------------End---------------------------------------------
+#------------------------------- Find Password ----------------------------
+def find_password():
+    website = website_entry.get()
+    try:
+        with open("data.json", "r") as file:
+            data = json.load(file)
+    except FileNotFoundError:
+        messagebox.showerror("Error", "Data file not found.")
+    else:
+        try:
+            data[website]
+        except KeyError:
+            messagebox.showerror("Error", "Website not found.")
+        else:
+            email = data[website]["email"]
+            password = data[website]["password"]
+            messagebox.showinfo(f"{website}", f"Email: {email}\nPassword: {password}")
+#-------------------------------End---------------------------------------------
 #___________________________BUTTONS___________________________________________
 
 generate_btn = Button(text="Generate Password", command=generate_password)
 generate_btn.grid(row=3, column=2)
+
+search_btn = Button(text="Search", command=find_password)
+search_btn.grid(row=1, column=2, sticky="NSEW")
 
 add_btn = Button(text="Add", width=36, command=save_data)
 add_btn.grid(row=4, column=1, columnspan=2, sticky="EW")

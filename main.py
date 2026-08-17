@@ -1,20 +1,10 @@
-import os.path
+import json
 from tkinter import *
 from tkinter import messagebox
-from pandas import DataFrame
 from random import choice,randint,shuffle
 import pyperclip
 
 FONT = ("Arial", 10, "bold")
-
-data_blueprint = {
-    "Website": [],
-    "Email": [],
-    "Password": []
-}
-df = DataFrame(data_blueprint)
-if not os.path.exists('data.txt'):
-    df.to_csv("data.txt", index=False, sep="|")
 
 window = Tk()
 window.title("Password Manager")
@@ -102,13 +92,25 @@ def save_data():
     website = website_entry.get()
     email = usermail_entry.get()
     password = password_entry.get()
+
+    new_data = {
+        website:{
+            "email":email,
+            "password":password,
+
+        }
+
+    }
     if website == "" or email == "" or password == "":
         messagebox.showerror("Error", "Please fill all fields")
     else:
         is_ok = messagebox.askokcancel(title=website, message=f"Email: {email}\nPassword: {password}\n\nProceed??? ")
         if is_ok:
-            df.loc[len(df)] = [website, email, password]
-            df.to_csv("data.txt", index=False, sep="|", mode="a", header=False)
+            with open("data.json", "r") as file:
+                data = json.load(file)
+                data.update(new_data)
+            with open("data.json", "w") as file:
+                json.dump(data, file, indent=4)
             website_entry.delete(0, END)
             usermail_entry.delete(0, END)
             password_entry.delete(0, END)
